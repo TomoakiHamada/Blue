@@ -79,6 +79,8 @@ public class BluetoothChat extends Activity {
     private BluetoothAdapter mBluetoothAdapter = null;
     // Member object for the chat services
     private BluetoothChatService mChatService = null;
+    
+    private final String crlf = System.getProperty("line.separator");
 
 
     @Override
@@ -270,9 +272,8 @@ public class BluetoothChat extends Activity {
             case MESSAGE_READ:
                 byte[] readBuf = (byte[]) msg.obj;
                 // construct a string from the valid bytes in the buffer
-                String readMessage = "";//new String(readBuf, 0, msg.arg1);
-                for(int i = 0; i < msg.arg1; i++)
-                	readMessage += String.format("%02x",readBuf[i]) + " ";
+                String readMessage = msgencode(msg,readBuf);//msgencode(msg,readBuf);//new String(readBuf, 0, msg.arg1);
+                //for(int i = 0; i < msg.arg1; i++)readMessage += String.format("%02x",readBuf[i]) + " ";
                 
                 
                 mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);//aaaaa
@@ -357,6 +358,57 @@ public class BluetoothChat extends Activity {
             return true;
         }
         return false;
+    }
+    public String msgencode(Message msg, byte[] readBuf){
+    	String msgs = "";
+    	int i = 0;
+    		if(readBuf[i] == (byte)0x9A){
+    			switch(readBuf[++i]){
+	    			case (byte)0x88 :
+	    				msgs = "計測開始";
+	    				break;
+	    			case (byte)0x89 :
+	    				msgs ="計測終了";
+	    				if(readBuf[++i] == (byte)0x00){
+	    					msgs += " コマンドか時刻による終了";
+	    				}else if(readBuf[i] == (byte)0x01){
+	    					msgs += " SW操作で終了";
+	    				}else if(readBuf[i] == (byte)0x02){
+	    					msgs += " メモリが一杯";
+	    				}else if(readBuf[i] == (byte)0x03){
+	    					msgs += " バッテリ残量がありません";
+	    				}else if(readBuf[i] == (byte)0x65){
+	    					msgs += " エラー　計測対象がありません";
+	    				}else if(readBuf[i] == (byte)0x66){
+	    					msgs += " エラー　I2Cエラー";
+	    				}
+	    				break;
+	    			case (byte)0x83 :
+	    				msgs ="バッテリ電圧";
+	    				int v =((readBuf[7]<<8)&0xFF00) + ((readBuf[6])&0xFF);
+	    				msgs += " "+ v/100 + "." +v%100+ "V";
+	    				v = readBuf[8] & 0xFF;
+	    				msgs += " " + v + "%" ;
+	    				break;
+	    			case (byte)0x80 :
+	    				msgs =crlf + "加速度"+crlf;
+	    				int x =(readBuf[8]<<16) + (readBuf[7]<<8)+(readBuf[6]);
+	    				int y =(readBuf[11]<<16) + (readBuf[10]<<8)+(readBuf[9]);
+	    				int z =(readBuf[14]<<16) + (readBuf[13]<<8)+(readBuf[12]);
+	    				msgs += "X:"+x +" Y:"+y +" Z:"+z+crlf;
+	    				msgs +="角速度"+crlf;
+	    				x =(readBuf[17]<<16) + (readBuf[16]<<8)+(readBuf[15]);
+	    				y =(readBuf[20]<<16) + (readBuf[19]<<8)+(readBuf[18]);
+	    				z =(readBuf[23]<<16) + (readBuf[22]<<8)+(readBuf[21]);
+	    				msgs += "X:"+x +" Y:"+y +" Z:"+z;
+	    				break;
+    			}
+    			
+    		}
+    		else{
+    			msgs ="No Senser data";
+    		}
+    	return msgs;
     }
 
 }
