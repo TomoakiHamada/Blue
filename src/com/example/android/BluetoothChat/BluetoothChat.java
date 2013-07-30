@@ -16,6 +16,8 @@
 
 package com.example.android.BluetoothChat;
 
+import java.io.IOException;
+
 import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -154,7 +156,12 @@ public class BluetoothChat extends Activity {
                 // Send a message using content of the edit text widget
                 TextView view = (TextView) findViewById(R.id.edit_text_out);
                 String message = view.getText().toString();
-                sendMessage(message);
+                try {
+					sendMessage(message);
+				} catch (IOException e) {
+					// TODO 自動生成された catch ブロック
+					e.printStackTrace();
+				}
             }
         });
 
@@ -198,8 +205,9 @@ public class BluetoothChat extends Activity {
     /**
      * Sends a message.
      * @param message  A string of text to send.
+     * @throws IOException 
      */
-    private void sendMessage(String message) {
+    private void sendMessage(String message) throws IOException {
         // Check that we're actually connected before trying anything
         if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
             Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
@@ -209,9 +217,11 @@ public class BluetoothChat extends Activity {
         // Check that there's actually something to send
         if (message.length() > 0) {
             // Get the message bytes and tell the BluetoothChatService to write
-            byte[] send = message.getBytes();
-            mChatService.write(send);
+            //byte[] send = message.getBytes();
+            //mChatService.write(send);//ここで送る？
 
+        	mChatService.write(message);
+        	
             // Reset out string buffer to zero and clear the edit text field
             mOutStringBuffer.setLength(0);
             mOutEditText.setText(mOutStringBuffer);
@@ -225,7 +235,12 @@ public class BluetoothChat extends Activity {
             // If the action is a key-up event on the return key, send the message
             if (actionId == EditorInfo.IME_NULL && event.getAction() == KeyEvent.ACTION_UP) {
                 String message = view.getText().toString();
-                sendMessage(message);
+                try {
+					sendMessage(message);
+				} catch (IOException e) {
+					// TODO 自動生成された catch ブロック
+					e.printStackTrace();
+				}
             }
             if(D) Log.i(TAG, "END onEditorAction");
             return true;
