@@ -417,6 +417,17 @@ public class BluetoothChat extends Activity {
 	    				z =(readBuf[23]<<16) + (readBuf[22]<<8)+(readBuf[21]);
 	    				msgs += "X:"+x +" Y:"+y +" Z:"+z;
 	    				break;
+	    			case (byte)0xBB :
+	    				msgs ="バッテリ電圧";
+	    				v =((readBuf[3]<<8)&0xFF00) + ((readBuf[2])&0xFF);
+	    				msgs += " "+ v/100 + "." +v%100+ "V";
+	    				v = readBuf[4] & 0xFF;
+	    				msgs += " " + v + "%" ;
+	    				break;
+	    			default:
+	    				msgs = "設定されていない返信";
+	    				for(int j = 1; j < msg.arg1-1; j++)msgs +=" "+String.format("%02x", readBuf[j]); //byteを16進数の表記のまま文字列で表示
+	    				break;
     			}
     			
     		}
