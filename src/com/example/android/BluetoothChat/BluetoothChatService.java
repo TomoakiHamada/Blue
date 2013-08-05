@@ -486,13 +486,27 @@ public class BluetoothChatService {
             
             String buf[] = message.split(" ");
             if(buf[0].equals("start")){
-            	startMeasure(mmOutStream, 10);
+            	if(buf[1].matches("^[0-9]{0,3}$")) {
+            		startMeasure(mmOutStream,Integer.parseInt(buf[1]));
+            	}else{
+            		startMeasure(mmOutStream);
+            	}
+            }else if(buf[0].equals("stop")){
+            	stopMeasure(mmOutStream);
+            }else if(buf[0].equals("setags")){
+            	if(buf[1].matches("^[0-9]{0,3}$")&&buf[2].matches("^[0-9]{0,3}$")&&buf[3].matches("^[0-9]{0,3}$")) {
+            		setAccelMeasurement(mmOutStream, Integer.parseInt(buf[1]), Integer.parseInt(buf[2]), Integer.parseInt(buf[3]));
+            	}
+            }else if(buf[0].equals("setRange")){
+            	if(buf[1].matches("^[0-3]{0}$"))setAccelRange(mmOutStream, Integer.parseInt(buf[1]));
+            }else if(buf[0].equals("getbatt")){
+            	getVoltageMeasurement(mmOutStream);
             }
 			//mmOutStream.write();
-			if(false){
+			/*if(false){
 			// Share the sent message back to the UI Activity
 			mHandler.obtainMessage(BluetoothChat.MESSAGE_WRITE, -1, -1, buffer)
-			        .sendToTarget();}
+			        .sendToTarget();}*/
         }
 
         public void cancel() {
@@ -574,11 +588,37 @@ public class BluetoothChatService {
   		}
   		sendDatum(out, sendData);
   	}
-
+  //計測開始（計測時間[秒]）
+  	public void startMeasure(OutputStream out){
+  		int commandLength = 17;
+  		byte[] sendData = new byte[commandLength];
+  		sendData[0] = (byte)0x9a;	//Header (0x9a fixed) [1 byte]
+  		sendData[1] = (byte)0x13;	//Command Code		  [1 byte]
+  		sendData[2] = (byte)0x00;	//相対(0) or 絶対時刻(1)
+  		sendData[3] = (byte)0x0c;	//開始年
+  		sendData[4] = (byte)0x0c;	//開始月
+  		sendData[5] = (byte)0x01;	//開始日
+  		sendData[6] = (byte)0x00;	//開始時
+  		sendData[7] = (byte)0x00;	//開始分
+  		sendData[8] = (byte)0x00;	//開始秒
+  		sendData[9] = (byte)0x00;	//相対(0) or 絶対時刻(1)
+  		sendData[10] = (byte)0x0c;	//終了年
+  		sendData[11] = (byte)0x0c;	//終了月
+  		sendData[12] = (byte)0x01;	//終了日
+  		sendData[13] = (byte)0x00;	//終了時
+  		sendData[14] = (byte)0x00;	//終了分
+  		sendData[15] = (byte)0x00;	//終了秒
+  		sendData[16] = (byte)0x00;
+  		for(int i = 0; i < commandLength-1; i++){
+  			sendData[commandLength-1] = (byte)(sendData[commandLength-1] ^ sendData[i]);	//BCC
+  		}
+  		sendDatum(out, sendData);
+  	}
   	//計測開始（計測時間[秒]）
   	public void startMeasure(OutputStream out, int sec){
   		int commandLength = 17;
   		byte[] sendData = new byte[commandLength];
+  		if(sec < 0 || sec > 255)sec = 0;
   		sendData[0] = (byte)0x9a;	//Header (0x9a fixed) [1 byte]
   		sendData[1] = (byte)0x13;	//Command Code		  [1 byte]
   		sendData[2] = (byte)0x00;	//相対(0) or 絶対時刻(1)
